@@ -1,8 +1,0 @@
-{
-  "name": "catalog-pdf-generator",
-  "version": "1.0.0",
-  "description": "Generador de fichas de productos",
-  "engines": {
-    "node": "20.x"
-  }
-}
