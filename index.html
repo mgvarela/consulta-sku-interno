@@ -1,0 +1,299 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Generador de Ficha de Producto</title>
+    <style>
+        :root {
+            --primary: #2563eb;
+            --primary-hover: #1d4ed8;
+            --bg-color: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            margin: 0;
+            padding: 2rem 1rem;
+        }
+
+        .container {
+            max-width: 700px;
+            margin: 0 auto;
+        }
+
+        /* Controles de búsqueda (Se ocultan al imprimir) */
+        .search-box {
+            background: var(--card-bg);
+            padding: 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 2rem;
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        input[type="text"] {
+            flex: 1;
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus {
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+        }
+
+        button {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.25rem;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--primary-hover);
+        }
+
+        button:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* Tarjeta / Ficha del Producto */
+        .product-card {
+            background: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);
+            display: none;
+        }
+
+        .product-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .product-title {
+            margin: 0;
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .product-sku {
+            margin: 0.25rem 0 0 0;
+            font-size: 0.875rem;
+            color: var(--text-muted);
+            font-family: monospace;
+        }
+
+        .section-title {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+        }
+
+        .product-description {
+            margin-bottom: 2rem;
+            font-size: 0.95rem;
+            line-height: 1.6;
+        }
+
+        /* Tabla de Atributos */
+        .attributes-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.9rem;
+        }
+
+        .attributes-table tr {
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .attributes-table td {
+            padding: 0.65rem 0;
+        }
+
+        .attribute-key {
+            font-weight: 500;
+            color: var(--text-muted);
+            width: 35%;
+            text-transform: capitalize;
+        }
+
+        .attribute-value {
+            color: var(--text-main);
+        }
+
+        .error-msg {
+            color: #dc2626;
+            background: #fef2f2;
+            padding: 1rem;
+            border-radius: 6px;
+            margin-bottom: 1rem;
+            display: none;
+            font-size: 0.9rem;
+        }
+
+        /* Estilos específicos para impresión / Generación de PDF */
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+            .search-box, .no-print {
+                display: none !important;
+            }
+            .product-card {
+                box-shadow: none;
+                padding: 0;
+                border: none;
+                display: block !important;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Buscador -->
+        <div class="search-box">
+            <input type="text" id="skuInput" placeholder="Ingrese SKU del producto (ej. SKU-123)..." autofocus>
+            <button id="searchBtn" onclick="buscarProducto()">Buscar</button>
+        </div>
+
+        <div id="errorMsg" class="error-msg"></div>
+
+        <!-- Ficha del Producto -->
+        <div id="productCard" class="product-card">
+            <div class="product-header">
+                <div>
+                    <h1 id="prodNombre" class="product-title"></h1>
+                    <p class="product-sku">SKU: <span id="prodSku"></span></p>
+                </div>
+                <button class="no-print" onclick="window.print()">Descargar PDF</button>
+            </div>
+
+            <div class="product-description">
+                <div class="section-title">Descripción</div>
+                <div id="prodDescripcion">Sin descripción</div>
+            </div>
+
+            <div id="attributesContainer">
+                <div class="section-title">Atributos</div>
+                <table class="attributes-table" id="prodAtributosTable">
+                    <!-- Los atributos se cargan dinámicamente -->
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        async function buscarProducto() {
+            const sku = document.getElementById('skuInput').value.trim();
+            const errorDiv = document.getElementById('errorMsg');
+            const cardDiv = document.getElementById('productCard');
+            const btn = document.getElementById('searchBtn');
+
+            if (!sku) return;
+
+            errorDiv.style.display = 'none';
+            cardDiv.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'Buscando...';
+
+            try {
+              
+                const response = await fetch('https://xml-json-feed-magento-cda.vercel.app/api/feed?mode=graphql', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': '' 
+                    },
+                    body: JSON.stringify({
+                        query: "query GetProduct($sku: String!) { product(sku:$sku) { sku nombre catalogo { descripcion descripcion_corta atributos } } }",
+                        variables: { sku: sku }
+                    })
+                });
+
+                const json = await response.json();
+                
+                // Si usas GraphQL, la respuesta viene en json.data.product
+                const product = json.data ? json.data.product : json.product;
+
+                if (!product) {
+                    throw new Error('No se encontró ningún producto con el SKU ingresado.');
+                }
+
+                // Pintar datos en el HTML
+                document.getElementById('prodNombre').textContent = product.nombre || 'Sin nombre';
+                document.getElementById('prodSku').textContent = product.sku;
+                
+                // Descripción (prioriza la larga, sino la corta)
+                const desc = product.catalogo?.descripcion || product.catalogo?.descripcion_corta || 'Sin descripción disponible.';
+                document.getElementById('prodDescripcion').innerHTML = desc;
+
+                // Atributos dinámicos
+                const tableBody = document.getElementById('prodAtributosTable');
+                tableBody.innerHTML = '';
+                
+                const atributos = product.catalogo?.atributos;
+                const attrContainer = document.getElementById('attributesContainer');
+
+                if (atributos && Object.keys(atributos).length > 0) {
+                    attrContainer.style.display = 'block';
+                    for (const [key, value] of Object.entries(atributos)) {
+                        const row = document.createElement('tr');
+                        const formattedKey = key.replace(/_/g, ' ');
+                        row.innerHTML = `
+                            <td class="attribute-key">${formattedKey}</td>
+                            <td class="attribute-value">${value}</td>
+                        `;
+                        tableBody.appendChild(row);
+                    }
+                } else {
+                    attrContainer.style.display = 'none';
+                }
+
+                cardDiv.style.display = 'block';
+
+            } catch (err) {
+                errorDiv.textContent = err.message || 'Ocurrió un error al consultar el catálogo.';
+                errorDiv.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'Buscar';
+            }
+        }
+
+        // Permitir buscar presionando la tecla Enter
+        document.getElementById('skuInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') {
+                buscarProducto();
+            }
+        });
+    </script>
+</body>
+</html>
