@@ -2,12 +2,7 @@
   "name": "catalog-pdf-generator",
   "version": "1.0.0",
   "description": "Generador de fichas de productos",
-  "main": "index.js",
-  "scripts": {
-    "start": "node server.js"
-  },
-  "dependencies": {},
   "engines": {
-  "node": "24.x"
+    "node": "20.x"
   }
 }
